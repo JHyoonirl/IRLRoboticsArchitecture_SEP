@@ -1,0 +1,47 @@
+# Apply to both the legacy /perception_node and the namespaced
+# /perception/perception_node used by the architecture launch.
+/**:
+  ros__parameters:
+    color_topic: /camera/color/image_raw
+    depth_topic: /camera/aligned_depth_to_color/image_raw
+    camera_info_topic: /camera/color/camera_info
+    camera_mode: rgbd
+    # Keep this prompt and grasp target synchronized with the intended object.
+    weights: /workspace/jhyoon_external/models/yoloe-26m-seg.pt
+    segmentation_prompt: mouse
+    confidence: 0.75
+    depth_scale: 0.001  # uint16 millimetres -> metres; use 1.0 for metre-valued depth
+    max_depth: 3.0
+    # Fallback only. When table_ransac_enabled is true, the table normal is
+    # estimated from aligned depth and used for PCA pose/grasp orientation.
+    up_axis: [0.0, -1.0, 0.0]
+    sync_slop: 0.05
+    # grasp pipeline은 FoundationPose와 독립적으로 동작합니다.
+    # pca를 기본으로 두고, 필요할 때만 FoundationPose를 비교용으로 켭니다.
+    pose_backend: pca
+    foundationpose_root: /workspace/jhyoon_external/FoundationPose
+    # YOLOE 결과 label과 왼쪽 이름이 정확히 같아야 합니다.
+    foundationpose_meshes: "can=/workspace/jhyoon_external/objects/Can/Can1_textured.obj"
+    # 실물 Can 높이 135mm / mesh 높이 1.989334 -> mesh 좌표를 미터 크기로 보정
+    foundationpose_mesh_scales: "can=0.067861908"
+    foundationpose_register_iterations: 5
+    foundationpose_track_iterations: 2
+    foundationpose_debug: 0
+    foundationpose_debug_dir: /workspace/test/foundationpose_debug
+    show_visualization: true
+    visualization_target: mouse
+    enable_rule_grasp: true
+    grasp_target: mouse
+    mask_erosion_pixels: 3
+    min_depth_points: 30
+    table_ransac_enabled: true
+    table_distance_threshold: 0.008
+    table_ransac_iterations: 100
+    table_min_inliers: 100
+    table_normal_tolerance_degrees: 30.0
+    gripper_min_width: 0.0
+    gripper_max_width: 0.085
+    grasp_width_clearance: 0.005
+    grasp_offset: 0.0
+    pregrasp_offset: 0.10
+    table_clearance: 0.005

@@ -1,0 +1,48 @@
+services:
+  perception:
+    build:
+      context: ../..
+      dockerfile: src/jhyoon_external/docker/Dockerfile
+    image: irl-perception:jazzy
+    network_mode: host
+    ipc: host
+    environment:
+      DISPLAY: "${DISPLAY:-:0}"
+      ROS_DOMAIN_ID: "${ROS_DOMAIN_ID:-0}"
+      RMW_IMPLEMENTATION: "${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"
+      YOLO_AUTOINSTALL: "false"
+      YOLO_CONFIG_DIR: "/workspace/ultralytics"
+      NVIDIA_VISIBLE_DEVICES: "${NVIDIA_VISIBLE_DEVICES:-all}"
+      NVIDIA_DRIVER_CAPABILITIES: "compute,utility,video"
+      USE_REALSENSE: "${USE_REALSENSE:-true}"
+      CAMERA_MODE: "${CAMERA_MODE:-rgbd}"
+      ENABLE_VISUALIZATION: "${ENABLE_VISUALIZATION:-false}"
+    volumes:
+      - ../../src:/workspace/ros2_ws/src:rw
+      - ../../test:/workspace/ros2_ws/test:rw
+      # Preserve ROS build products when the container is recreated.
+      - irl_architecture_build:/workspace/ros2_ws/build
+      - irl_architecture_install:/workspace/ros2_ws/install
+      - irl_architecture_log:/workspace/ros2_ws/log
+      - irl_ultralytics:/workspace/ultralytics
+      # All implementation/runtime dependencies owned by this workstream.
+      - ${JHYOON_EXTERNAL_ROOT:-.}:/workspace/jhyoon_external:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+      - /dev/video0:/dev/video0
+      - /dev/video1:/dev/video1
+      - /dev/video2:/dev/video2
+      - /dev/video3:/dev/video3
+      - /dev/video4:/dev/video4
+      - /dev/video5:/dev/video5
+      - /dev/media0:/dev/media0
+      - /dev/media1:/dev/media1
+    gpus: all
+    command: ["bash", "-lc", "ros2 launch irl_bringup architecture.launch.py use_realsense:=$${USE_REALSENSE:-true} camera_mode:=$${CAMERA_MODE:-rgbd} enable_visualization:=$${ENABLE_VISUALIZATION:-false}"]
+
+volumes:
+  irl_architecture_build:
+  irl_architecture_install:
+  irl_architecture_log:
+  irl_ultralytics:

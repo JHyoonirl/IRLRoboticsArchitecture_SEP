@@ -1,0 +1,6 @@
+services:
+  perception:
+    # Keep CUDA available for YOLOE while removing unavailable camera devices.
+    devices: !reset []
+    environment:
+      USE_REALSENSE: "false"

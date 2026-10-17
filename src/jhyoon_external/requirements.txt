@@ -1,0 +1,34 @@
+# Optional runtime dependencies. The ROS node remains importable without them.
+# numpy 1.x keeps compatibility with the ROS Jazzy cv_bridge binary.
+numpy<2
+ultralytics==8.4.177
+git+https://github.com/ultralytics/CLIP.git@7ffa84b3bfa40c42ecc1c77147a855e69cb2dd40
+ftfy==6.3.1
+regex==2026.9.29
+
+# FoundationPose Python runtime. CUDA extensions are built in docker/Dockerfile.
+scipy
+scikit-learn
+h5py
+joblib
+PyYAML>=6
+ruamel.yaml>=0.18
+imageio
+open3d
+trimesh
+transformations
+matplotlib
+pandas
+Pillow
+pyrender
+pyOpenGL>=3.1
+pyOpenGL_accelerate>=3.1
+kornia>=0.7
+omegaconf>=2.3
+tqdm
+warp-lang
+scikit-image
+pybind11
+ninja
+fvcore
+iopath

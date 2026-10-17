@@ -1,0 +1,20 @@
+build/
+install/
+log/
+.git/
+.gitmodules
+.pytest_cache/
+src/jhyoon_external/FoundationPose/
+src/jhyoon_external/models/*
+src/jhyoon_external/objects/*
+!src/jhyoon_external/models/.gitkeep
+!src/jhyoon_external/objects/.gitkeep
+src/jhyoon_external/.git/
+# Legacy locations kept out of the build context until the root-owned copy is removed.
+models/
+objects/
+external/
+test/data/
+__pycache__/
+*.egg-info/
+*.pyc

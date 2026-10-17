@@ -1,0 +1,10 @@
+models/*
+!models/.gitkeep
+objects/*
+!objects/.gitkeep
+FoundationPose/debug_run*/
+FoundationPose/__pycache__/
+FoundationPose/mycpp/build/
+FoundationPose/weights/
+__pycache__/
+*.py[cod]

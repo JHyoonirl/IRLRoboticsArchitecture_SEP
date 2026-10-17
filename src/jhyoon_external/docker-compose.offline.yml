@@ -1,0 +1,8 @@
+services:
+  perception:
+    # The base compose file exposes RealSense devices. Offline RGB-D tests
+    # do not need them and should also work on a host without /dev/video*.
+    devices: !reset []
+    gpus: !reset []
+    environment:
+      USE_REALSENSE: "false"

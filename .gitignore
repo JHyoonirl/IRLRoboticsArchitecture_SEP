@@ -1,0 +1,33 @@
+build/
+install/
+log/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Runtime artifacts supplied separately from the source repository.
+src/jhyoon_external/models/*
+!src/jhyoon_external/models/.gitkeep
+src/jhyoon_external/objects/*
+!src/jhyoon_external/objects/.gitkeep
+src/jhyoon_external/FoundationPose/debug_run*/
+src/jhyoon_external/FoundationPose/__pycache__/
+# FoundationPose is maintained as a separate Git repository.
+src/jhyoon_external/FoundationPose/
+# Legacy runtime locations; use src/jhyoon_external instead.
+models/
+objects/
+external/
+test/data/
+
+# Local IDE and environment files.
+.venv/
+.idea/
+.vscode/
+
+# Keep empty runtime mount points in a fresh clone, but never commit assets.
+!src/jhyoon_external/models/
+!src/jhyoon_external/models/.gitkeep
+!src/jhyoon_external/objects/
+!src/jhyoon_external/objects/.gitkeep
