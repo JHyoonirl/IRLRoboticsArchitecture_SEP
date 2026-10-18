@@ -1,0 +1,29 @@
+board_spec: charuco_board.yaml
+
+# The board center is positioned in base_link. Translation values in the
+# human-readable board_pose are millimetres; orientation is XYZ Euler degrees
+# composed as Rz @ Ry @ Rx. Axis mapping: base +X -> marker -Y,
+# base +Y -> marker -X, and base +Z -> marker -Z.
+board_pose:
+  parent_frame: base_link
+  child_frame: charuco_board
+  translation_mm: [310.5, -12.5, 8.0]
+  rotation_xyz_deg: [0.0, 180.0, 0.0]
+
+camera:
+  image_topic: /camera/color/image_raw
+  camera_info_topic: /camera/color/camera_info
+  link_frame: camera_link
+
+collection:
+  sample_count: 30
+  min_charuco_corners: 12
+  min_inlier_samples: 24
+  sample_period_sec: 0.1
+  max_reprojection_error_px: 1.5
+  translation_inlier_tolerance_m: 0.004
+  rotation_inlier_tolerance_deg: 1.5
+
+# Relative paths are resolved from this YAML file's directory.
+output_file: camera_extrinsics.yaml
+publish_static_transform: true

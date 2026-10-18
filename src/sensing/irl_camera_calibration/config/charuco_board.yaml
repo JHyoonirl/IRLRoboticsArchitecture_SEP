@@ -1,0 +1,10 @@
+# Physical board specification. Lengths are measured in metres.
+board:
+  name: charuco_5x5
+  squares_x: 5
+  squares_y: 5
+  square_length_m: 0.020
+  marker_length_m: 0.015
+  dictionary: DICT_5X5_100
+  legacy_pattern: false
+  origin: center

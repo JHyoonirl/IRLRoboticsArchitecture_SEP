@@ -63,6 +63,9 @@ RUN python3 -m pip install --no-cache-dir \
     pyzmq tornado wrapt \
     && python3 -m pip install --no-cache-dir "numpy<2"
 
+RUN apt-get update && apt-get install -y --no-install-recommends ros-jazzy-rviz2 \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+
 COPY src ./src
 RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --symlink-install \
@@ -70,5 +73,13 @@ RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
 
 COPY src/jhyoon_external/docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Make interactive shells opened with `docker exec` or `docker compose run`
+# inherit the ROS and workspace environment automatically.
+RUN printf '\n%s\n' \
+    'source /opt/ros/jazzy/setup.bash' \
+    'if [ -f /workspace/ros2_ws/install/setup.bash ]; then source /workspace/ros2_ws/install/setup.bash; fi' \
+    >> /root/.bashrc
+
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["ros2", "launch", "irl_bringup", "architecture.launch.py"]

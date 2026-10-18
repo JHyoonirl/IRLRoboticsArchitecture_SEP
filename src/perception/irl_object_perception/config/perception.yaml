@@ -9,7 +9,7 @@
     # Keep this prompt and grasp target synchronized with the intended object.
     weights: /workspace/jhyoon_external/models/yoloe-26m-seg.pt
     segmentation_prompt: mouse
-    confidence: 0.75
+    confidence: 0.5
     depth_scale: 0.001  # uint16 millimetres -> metres; use 1.0 for metre-valued depth
     max_depth: 3.0
     # Fallback only. When table_ransac_enabled is true, the table normal is
