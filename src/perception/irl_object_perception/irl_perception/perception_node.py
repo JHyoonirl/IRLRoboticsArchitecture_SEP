@@ -2,23 +2,23 @@
 
 from __future__ import annotations
 
-import re
-
 import cv2
 import message_filters
 import numpy as np
 import rclpy
 from cv_bridge import CvBridge
-from geometry_msgs.msg import Pose, PoseArray, PoseStamped, TransformStamped
+from geometry_msgs.msg import Pose, PoseArray, PoseStamped
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import CameraInfo, Image
-from tf2_ros import TransformBroadcaster
 from vision_msgs.msg import Detection2D, Detection2DArray, ObjectHypothesisWithPose
+from irl_interfaces.msg import WorldObjectArray
 
 from .foundationpose_adapter import FoundationPoseAdapter
 from .grasp_pipeline import GraspPipelineConfig, RuleBasedGraspPipeline
 from .geometry import quaternion_from_matrix
 from .pose_estimator import ObjectPoseEstimator
+from .object_state import make_object_state
 from .segmenter import Segment, YoloESegmenter
 from .visualization import draw_overlay
 
@@ -33,11 +33,18 @@ class PerceptionNode(Node):
             ("camera_mode", "rgbd"),
             ("weights", "/workspace/jhyoon_external/models/yoloe-26m-seg-pf.pt"),
             ("segmentation_prompt", ""),
+            ("text_prompt_aliases", "{}"),
+            ("image_prompt_dir", ""),
+            ("image_prompt_label", "rigid_object"),
+            ("prompt_mode", "auto"),
+            ("inference_imgsz", 960),
             ("confidence", 0.25),
             ("depth_scale", 0.001),
             ("max_depth", 3.0),
             ("up_axis", [0.0, -1.0, 0.0]),
             ("sync_slop", 0.05),
+            ("sensor_qos_depth", 1),
+            ("sync_queue_size", 2),
             ("pose_backend", "auto"),
             ("foundationpose_root", "/workspace/jhyoon_external/FoundationPose"),
             ("foundationpose_meshes", ""),
@@ -70,6 +77,11 @@ class PerceptionNode(Node):
             str(get("weights")),
             float(get("confidence")),
             text_prompt=str(get("segmentation_prompt")),
+            text_prompt_aliases=str(get("text_prompt_aliases")),
+            image_prompt_dir=str(get("image_prompt_dir")),
+            image_prompt_label=str(get("image_prompt_label")),
+            prompt_mode=str(get("prompt_mode")),
+            inference_imgsz=int(get("inference_imgsz")),
         )
         self.depth_scale = float(get("depth_scale"))
         self.max_depth = float(get("max_depth"))
@@ -128,25 +140,30 @@ class PerceptionNode(Node):
         self.detection_pub = self.create_publisher(Detection2DArray, "detections", 10)
         self.mask_pub = self.create_publisher(Image, "instance_mask", 10)
         self.pose_pub = self.create_publisher(PoseArray, "object_poses", 10)
+        self.objects_pub = self.create_publisher(WorldObjectArray, "objects", 10)
         self.grasp_candidates_pub = self.create_publisher(PoseArray, "grasp_candidates", 10)
         self.best_grasp_pub = self.create_publisher(PoseStamped, "best_grasp", 10)
         self.debug_image_pub = self.create_publisher(Image, "debug_image", 10)
-        self.tf_broadcaster = TransformBroadcaster(self)
         self.create_subscription(CameraInfo, str(get("camera_info_topic")), self.camera_info_callback, 10)
 
         color_topic = str(get("color_topic"))
+        sensor_depth, sync_depth = int(get("sensor_qos_depth")), int(get("sync_queue_size"))
+        if sensor_depth < 1 or sync_depth < 1:
+            raise ValueError("sensor_qos_depth and sync_queue_size must be positive")
+        # Expensive inference must consume current sensor frames, not a backlog.
+        image_qos = QoSProfile(depth=sensor_depth, reliability=ReliabilityPolicy.BEST_EFFORT)
         self._sync = None
         if self.camera_mode == "rgbd":
-            color_sub = message_filters.Subscriber(self, Image, color_topic)
-            depth_sub = message_filters.Subscriber(self, Image, str(get("depth_topic")))
+            color_sub = message_filters.Subscriber(self, Image, color_topic, qos_profile=image_qos)
+            depth_sub = message_filters.Subscriber(self, Image, str(get("depth_topic")), qos_profile=image_qos)
             sync = message_filters.ApproximateTimeSynchronizer(
-                [color_sub, depth_sub], queue_size=5, slop=float(get("sync_slop"))
+                [color_sub, depth_sub], queue_size=sync_depth, slop=float(get("sync_slop"))
             )
             sync.registerCallback(self.image_callback)
             self._sync = sync
         else:
             self._color_sub = self.create_subscription(
-                Image, color_topic, self.color_only_callback, 10
+                Image, color_topic, self.color_only_callback, image_qos
             )
         self._camera_info_warned = False
 
@@ -162,11 +179,13 @@ class PerceptionNode(Node):
             if not self._camera_info_warned:
                 self.get_logger().warning("Waiting for CameraInfo; masks are available but 3D poses are not")
                 self._camera_info_warned = True
+            self.publish_unposed_objects(color_msg, segments, "missing_camera_info")
             self.update_visualization(color_msg.header, color, segments, {})
             return
         self._camera_info_warned = False
         if depth.shape != color.shape[:2]:
             self.get_logger().error("Depth must be aligned to the color image")
+            self.publish_unposed_objects(color_msg, segments, "unaligned_depth")
             self.update_visualization(color_msg.header, color, segments, {})
             return
         pose_visuals = self.publish_3d_outputs(color_msg, color, depth, segments)
@@ -176,7 +195,16 @@ class PerceptionNode(Node):
         color = self.bridge.imgmsg_to_cv2(color_msg, desired_encoding="bgr8")
         segments = self.segmenter.segment(color)
         self.publish_2d_outputs(color_msg, segments)
+        self.publish_unposed_objects(color_msg, segments, "rgb_only")
         self.update_visualization(color_msg.header, color, segments, {})
+
+    def publish_unposed_objects(self, msg, segments, reason):
+        objects = WorldObjectArray(header=msg.header)
+        objects.objects = [make_object_state(msg.header, index, item, status=reason)
+                           for index, item in enumerate(segments)]
+        self.objects_pub.publish(objects)
+        # Clear legacy consumers instead of leaving a pose from an older frame.
+        self.pose_pub.publish(PoseArray(header=msg.header))
 
     def update_visualization(
         self,
@@ -228,10 +256,10 @@ class PerceptionNode(Node):
         self, msg: Image, color: np.ndarray, depth: np.ndarray, segments: list[Segment]
     ) -> dict[int, tuple[np.ndarray, np.ndarray | None, str]]:
         poses = PoseArray(header=msg.header)
+        objects = WorldObjectArray(header=msg.header)
         grasp_candidates = PoseArray(header=msg.header)
         best_grasp: PoseStamped | None = None
         best_grasp_score = -np.inf
-        transforms: list[TransformStamped] = []
         pose_visuals: dict[int, tuple[np.ndarray, np.ndarray | None, str]] = {}
         fx, fy, cx, cy = self.intrinsics
         camera_matrix = np.array([[fx, 0.0, cx], [0.0, fy, cy], [0.0, 0.0, 1.0]])
@@ -250,6 +278,8 @@ class PerceptionNode(Node):
         if table_plane is not None:
             pose_up_axis = tuple(float(value) for value in table_plane.normal)
         for index, item in enumerate(segments):
+            object_state = make_object_state(msg.header, index, item)
+            objects.objects.append(object_state)
             center = None
             quaternion = None
             rotation = None
@@ -304,22 +334,17 @@ class PerceptionNode(Node):
             pose.position.x, pose.position.y, pose.position.z = center.tolist()
             pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w = quaternion.tolist()
             poses.poses.append(pose)
+            object_state.pose = pose
+            object_state.pose_valid = True
+            object_state.pose_source = source
+            object_state.pose_status = "ok"
             pose_visuals[index] = (center.copy(), rotation, source)
 
-            transform = TransformStamped(header=msg.header)
-            label = re.sub(r"[^A-Za-z0-9_]", "_", item.label)
-            transform.child_frame_id = f"object_{label}_{index}"
-            transform.transform.translation.x = pose.position.x
-            transform.transform.translation.y = pose.position.y
-            transform.transform.translation.z = pose.position.z
-            transform.transform.rotation = pose.orientation
-            transforms.append(transform)
         self.pose_pub.publish(poses)
+        self.objects_pub.publish(objects)
         self.grasp_candidates_pub.publish(grasp_candidates)
         if best_grasp is not None:
             self.best_grasp_pub.publish(best_grasp)
-        if transforms:
-            self.tf_broadcaster.sendTransform(transforms)
         return pose_visuals
 
     def destroy_node(self) -> bool:

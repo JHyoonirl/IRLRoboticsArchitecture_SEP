@@ -14,6 +14,7 @@
   <exec_depend>irl_sensor_prepro</exec_depend>
   <exec_depend>irl_visualization</exec_depend>
   <exec_depend>irl_robot_estimation</exec_depend>
+  <exec_depend>irl_camera_calibration</exec_depend>
   <exec_depend>irl_world_state</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>

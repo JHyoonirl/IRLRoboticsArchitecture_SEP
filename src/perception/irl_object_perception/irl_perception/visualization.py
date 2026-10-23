@@ -15,7 +15,7 @@ def draw_overlay(
     camera_matrix: np.ndarray | None,
     target_label: str,
 ) -> np.ndarray:
-    """Draw masks, labels, and the target's estimated pose on a BGR image."""
+    """Draw every segmented object's pose, highlighting the selected target."""
     frame = image.copy()
     overlay = frame.copy()
     palette = ((255, 170, 30), (200, 80, 230), (60, 220, 120), (40, 180, 255))
@@ -39,7 +39,7 @@ def draw_overlay(
         label = f"{item.label} {item.score:.2f}"
 
         pose_info = poses.get(index)
-        if pose_info is not None and is_target:
+        if pose_info is not None:
             center, rotation, source = pose_info
             label += f" | {source}"
             if rotation is not None and camera_matrix is not None:
@@ -49,7 +49,7 @@ def draw_overlay(
                 frame, position_text, (x1, min(frame.shape[0] - 8, y2 + 20)),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.48, color, 2, cv2.LINE_AA,
             )
-        elif is_target:
+        else:
             label += " | pose pending"
 
         cv2.putText(

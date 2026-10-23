@@ -12,6 +12,8 @@ setup(
         (f"share/{package_name}", ["package.xml"]),
         (f"share/{package_name}/launch", [
             "launch/architecture.launch.py",
+            "launch/estimation.launch.py",
+            "launch/world_state.launch.py",
             "launch/perception.launch.py",
             "launch/realsense_perception.launch.py",
             "launch/sensing.launch.py",

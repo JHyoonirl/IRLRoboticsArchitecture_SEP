@@ -11,6 +11,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RobotState.msg"
   "msg/WorldState.msg"
   "msg/WorldObject.msg"
+  "msg/WorldObjectArray.msg"
   "msg/GripperState.msg"
   DEPENDENCIES geometry_msgs std_msgs vision_msgs
 )

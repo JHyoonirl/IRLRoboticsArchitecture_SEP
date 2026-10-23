@@ -4,6 +4,19 @@ Estimate a fixed camera's pose in `base_link` from a stationary ChArUco board.
 The board specification and its measured center pose are configured separately
 from the calibration node.
 
+Calibration is only needed after the camera or its reference board setup changes.
+For normal operation, estimation publishes the saved mounting pose without
+collecting new board observations:
+
+```bash
+ros2 launch irl_bringup estimation.launch.py
+```
+
+The `camera_tf` node reads `config/camera_extrinsics.yaml` at startup and publishes
+`base_link -> camera_link` on `/tf_static`. Restart estimation after replacing
+the saved file. Stop this publisher before running a new calibration (or launch
+estimation with `publish_camera_tf:=false`) so only one node owns that transform.
+
 ## Configuration
 
 Edit `config/charuco_board.yaml` to match the printed board. `squares_x` and

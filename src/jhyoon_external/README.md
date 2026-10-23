@@ -1,5 +1,7 @@
 # jhyoon_external
 
+[카메라 → Calibration → Perception → World State 단계별 실행](MANUAL_RUN.md)
+
 Jihyun의 sensing/perception 구현이 의존하는 외부 코드와 실행 자산을 관리하는
 독립 Git 경계입니다.
 
@@ -35,8 +37,19 @@ git submodule update --init --recursive
 ```bash
 cd /home/irl/Desktop/IRLRoboticsArchitecture/src/jhyoon_external
 docker compose build perception
-docker compose up --force-recreate perception
+bash docker/compose-camera.sh up --force-recreate perception
 ```
+
+카메라의 `/dev/videoN`, `/dev/mediaN` 번호는 호스트 및 USB 연결에 따라 달라질 수
+있습니다. `compose-camera.sh`는 현재 존재하는 장치만 매핑하므로 고정 목록의
+`/dev/video8` 등이 없어서 컨테이너 시작이 실패하는 문제를 피합니다.
+장치를 재연결한 뒤에는 위 명령을 다시 실행해 매핑을 갱신합니다.
+이 스크립트는 Docker daemon이 실행 중인 호스트에서 사용합니다.
+
+Perception launch는 호스트에 마운트된 `models/`에서 실행합니다.
+MobileCLIP의 `mobileclip2_b.ts` 같은 보조 가중치도 이 디렉터리에 저장되어
+`--force-recreate` 이후 재사용됩니다. `YOLO_CONFIG_DIR`는 설정 파일 저장
+위치이며, 작업 디렉터리에 다운로드되는 가중치를 보존하지는 않습니다.
 
 offline 실행은 다음 override를 추가합니다.
 

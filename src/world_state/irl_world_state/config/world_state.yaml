@@ -1,0 +1,22 @@
+/**:
+  ros__parameters:
+    tracking_frame: base_link
+    publish_rate_hz: 10.0
+    max_measurement_age_sec: 0.75
+    tracker_measurement_std: 0.015         # measurement noise, m
+    tracker_acceleration_std: 0.5         # motion process noise
+    tracker_association_distance: 0.20    # hard 3D association gate, m
+    tracker_mahalanobis_gate: 11.34
+    tracker_min_observations: 3
+    tracker_min_age: 0.4                  # s
+    tracker_retention: 2.0                # retain ID across missing observations, s
+    tracker_pose_timeout: 0.7             # s
+    tracker_observation_timeout: 0.75      # s
+    tracker_action_max_age: 0.3            # latest observation must be this recent, s
+    tracker_max_position_std: 0.08        # m
+    tracker_confidence_rise_tau: 1.0       # s
+    tracker_confidence_fall_tau: 0.7       # s
+    tracker_orientation_tau: 0.25         # s
+    tracker_max_orientation_error: 0.35   # rad; gate action while orientation settles
+    tracker_ready_on: 0.60
+    tracker_ready_off: 0.40

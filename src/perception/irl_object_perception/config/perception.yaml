@@ -6,16 +6,26 @@
     depth_topic: /camera/aligned_depth_to_color/image_raw
     camera_info_topic: /camera/color/camera_info
     camera_mode: rgbd
-    # Keep this prompt and grasp target synchronized with the intended object.
+    # Detection targets may include several classes; grasp_target selects one.
     weights: /workspace/jhyoon_external/models/yoloe-26m-seg.pt
-    segmentation_prompt: mouse
-    confidence: 0.5
+    # Image target and text targets are separate classes in the same prediction.
+    prompt_mode: hybrid  # text | image | hybrid | auto
+    segmentation_prompt: black glove, orange glove, glove, coke, hand  # Comma-separated additional classes, e.g. "black glove, cup"
+    # Improve the model description while preserving the published class name.
+    text_prompt_aliases: '{"orange glove": "orange rubber glove"}'
+    # All images are cropped views of the SAME object; the full image is its bbox.
+    image_prompt_dir: /workspace/ros2_ws/src/perception/irl_object_perception/image_prompt
+    image_prompt_label: rigid_object
+    inference_imgsz: 1280  # Try 1280 for small objects; increases compute/memory.
+    confidence: 0.3
     depth_scale: 0.001  # uint16 millimetres -> metres; use 1.0 for metre-valued depth
     max_depth: 3.0
     # Fallback only. When table_ransac_enabled is true, the table normal is
     # estimated from aligned depth and used for PCA pose/grasp orientation.
     up_axis: [0.0, -1.0, 0.0]
     sync_slop: 0.05
+    sensor_qos_depth: 1  # Keep latest frames when inference is slower than camera FPS.
+    sync_queue_size: 2
     # grasp pipeline은 FoundationPose와 독립적으로 동작합니다.
     # pca를 기본으로 두고, 필요할 때만 FoundationPose를 비교용으로 켭니다.
     pose_backend: pca
@@ -29,9 +39,10 @@
     foundationpose_debug: 0
     foundationpose_debug_dir: /workspace/test/foundationpose_debug
     show_visualization: true
-    visualization_target: mouse
+    # Every segmented object gets pose estimation and axes; this only highlights one.
+    visualization_target: rigid_object
     enable_rule_grasp: true
-    grasp_target: mouse
+    grasp_target: rigid_object
     mask_erosion_pixels: 3
     min_depth_points: 30
     table_ransac_enabled: true

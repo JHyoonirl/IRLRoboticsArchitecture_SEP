@@ -132,7 +132,7 @@ class WorldStateVisualizer(Node):
         pose_status = "pose=valid" if item.pose_valid else "pose=unknown"
         label.text = (
             f"{item.object_id} | {item.class_name or 'unknown'}\n"
-            f"conf={item.confidence:.2f} | {pose_status}"
+            f"trust={item.confidence:.2f} | {item.tracking_status} | ready={item.actionable} | {pose_status}"
         )
         markers.append(label)
         return markers
@@ -157,6 +157,11 @@ class WorldStateVisualizer(Node):
                 "id": item.object_id,
                 "class": item.class_name,
                 "confidence": round(float(item.confidence), 3),
+                "detection_confidence": round(float(item.detection_confidence), 3),
+                "track_confirmed": bool(item.track_confirmed),
+                "actionable": bool(item.actionable),
+                "tracking_status": item.tracking_status,
+                "observation_age_sec": round(float(item.observation_age_sec), 3),
                 "visible": bool(item.visible),
                 "pose_valid": bool(item.pose_valid),
             }

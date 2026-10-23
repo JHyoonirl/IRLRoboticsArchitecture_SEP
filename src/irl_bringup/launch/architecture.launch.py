@@ -8,7 +8,6 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -24,6 +23,7 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument("use_realsense", default_value="true"),
         DeclareLaunchArgument("camera_mode", default_value="rgbd"),
         DeclareLaunchArgument("enable_visualization", default_value="false"),
+        DeclareLaunchArgument("publish_camera_tf", default_value="true"),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(sensing_launch),
             launch_arguments={
@@ -44,16 +44,13 @@ def generate_launch_description() -> LaunchDescription:
             }.items(),
             condition=IfCondition(LaunchConfiguration("enable_visualization")),
         ),
-        Node(
-            package="irl_robot_estimation",
-            executable="mock_state_estimation",
-            name="mock_state_estimation",
-            output="screen",
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(package_share, "launch", "estimation.launch.py")),
+            launch_arguments={
+                "publish_camera_tf": LaunchConfiguration("publish_camera_tf"),
+            }.items(),
         ),
-        Node(
-            package="irl_world_state",
-            executable="world_state",
-            name="world_state",
-            output="screen",
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(package_share, "launch", "world_state.launch.py")),
         ),
     ])

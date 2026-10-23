@@ -2,7 +2,7 @@
 <package format="3">
   <name>irl_robot_estimation</name>
   <version>0.1.0</version>
-  <description>Mock robot-state estimator for early system integration.</description>
+  <description>Saved camera mounting TF and mock robot-state estimation.</description>
   <maintainer email="irl@example.com">IRL Robotics</maintainer>
   <license>Apache-2.0</license>
 
@@ -11,6 +11,11 @@
   <depend>irl_interfaces</depend>
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>irl_camera_calibration</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <test_depend>python3-pytest</test_depend>
 
   <export>
     <build_type>ament_python</build_type>

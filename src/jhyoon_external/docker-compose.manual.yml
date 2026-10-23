@@ -1,0 +1,5 @@
+services:
+  perception:
+    # Keep the container available for separate camera/calibration/perception
+    # shells without launching architecture.launch.py automatically.
+    command: ["sleep", "infinity"]

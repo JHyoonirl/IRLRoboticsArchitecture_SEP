@@ -10,8 +10,9 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", [f"resource/{package_name}"]),
         (f"share/{package_name}", ["package.xml"]),
+        (f"share/{package_name}/config", ["config/world_state.yaml"]),
     ],
-    install_requires=["setuptools"],
+    install_requires=["setuptools", "numpy", "scipy"],
     zip_safe=True,
     entry_points={
         "console_scripts": [

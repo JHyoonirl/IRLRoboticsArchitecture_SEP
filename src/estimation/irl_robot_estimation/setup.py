@@ -11,10 +11,11 @@ setup(
         ("share/ament_index/resource_index/packages", [f"resource/{package_name}"]),
         (f"share/{package_name}", ["package.xml"]),
     ],
-    install_requires=["setuptools"],
+    install_requires=["setuptools", "PyYAML"],
     zip_safe=True,
     entry_points={
         "console_scripts": [
+            "camera_tf = irl_robot_estimation.camera_tf:main",
             "mock_state_estimation = irl_robot_estimation.mock_state_estimation:main",
         ],
     },

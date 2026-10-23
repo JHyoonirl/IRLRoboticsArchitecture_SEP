@@ -30,15 +30,12 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       # USB bus entries are created dynamically when cameras reconnect.
       - /dev/bus/usb:/dev/bus/usb:rw
+    # Minimal fixed mappings. To expose all actual camera nodes, use
+    # bash docker/compose-camera.sh up --force-recreate perception
+    # to replace this list with the currently available camera nodes.
     devices:
       - /dev/video0:/dev/video0
       - /dev/video1:/dev/video1
-      - /dev/video8:/dev/video8
-      - /dev/video9:/dev/video9
-      - /dev/video10:/dev/video10
-      - /dev/video11:/dev/video11
-      - /dev/video12:/dev/video12
-      - /dev/video13:/dev/video13
       - /dev/media0:/dev/media0
       - /dev/media1:/dev/media1
       - /dev/media2:/dev/media2
@@ -47,7 +44,10 @@ services:
       - 'c 81:* rmw'
       - 'c 237:* rmw'
     gpus: all
-    command: ["bash", "-lc", "ros2 launch irl_bringup architecture.launch.py use_realsense:=$${USE_REALSENSE:-true} camera_mode:=$${CAMERA_MODE:-rgbd} enable_visualization:=$${ENABLE_VISUALIZATION:-false}"]
+    # MobileCLIP downloads relative to cwd. Launch from the host-mounted models
+    # directory so auxiliary weights survive --force-recreate as well.
+    # Keep the entrypoint's cwd at ros2_ws for its optional colcon build.
+    command: ["bash", "-lc", "cd /workspace/jhyoon_external/models && exec ros2 launch irl_bringup architecture.launch.py use_realsense:=$${USE_REALSENSE:-true} camera_mode:=$${CAMERA_MODE:-rgbd} enable_visualization:=$${ENABLE_VISUALIZATION:-false}"]
 
 volumes:
   irl_architecture_build:
